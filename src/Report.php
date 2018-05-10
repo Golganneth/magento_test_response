@@ -3,21 +3,29 @@ namespace Magento;
 
 use Exception;
 use Magento\Util\Validation\ReportValidator;
+use Magento\Util\Formatter\Report\Factory as FormatterReportFactory; 
+use Magento\Util\Formatter\Exception\UnknownFormatException;
 
-class Report
-{
-
+class Report {
     private $title;
-
     private $date;
-
     private $content;
 
     private $validator;
-
-    public function __construct(ReportValidator $validator)
-    {
-        $this->validator = $validator;
+    private $formatterFactory;
+    
+    public function __construct(ReportValidator $validator = null, $formatterFactory = null) {
+        if (!empty($validator)) {
+            $this->validator = $validator;
+        } else {
+            $this->validator = new ReportValidator();
+        }
+        
+        if(!empty($formatterFactory)) {
+            $this->formatterFactory = $formatterFactory;
+        } else {
+            $this->formatterFactory = new FormatterReportFactory();
+        }
     }
 
     public function setTitle($title)
@@ -54,11 +62,6 @@ class Report
         return $this->content;
     }
 
-    public function formatJson()
-    {
-        return json_encode($this->reportToArray());
-    }
-
     public function toArray()
     {
         return [
@@ -73,31 +76,15 @@ class Report
         return $this->toArray();
     }
 
-    public function formatHtml()
-    {
-        return "
-            <h1>{$this->title}</h1> .
-            <p>{$this->date}</p> .
-            <div class='content'>{$this->content}</div> .
-        ";
-    }
-
     public function sendReport($type)
     {
+        $reportSent = false;
         if ($this->validator->validate($this)) {
-            if ($type == 'HTML') {
-                $mailer = new Mailer();
-                $mailer->send($this->formatHtml());
-                return true;
-            }
-            
-            if ($type == 'JSON') {
-                $mailer = new Mailer();
-                $mailer->send($this->formatJson());
-                return true;
-            }
+            $formatter = $this->formatterFactory->getInstance($type);
+            $mailer = new Mailer();
+            $reportSent = $mailer->send($formatter->format($this));
         }
         
-        return false;
+        return $reportSent;
     }
 }
