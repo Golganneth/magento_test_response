@@ -1,12 +1,24 @@
 <?php
-
 namespace Magento;
+
+use Exception;
+use Magento\Util\Validation\ReportValidator;
 
 class Report
 {
+
     private $title;
+
     private $date;
+
     private $content;
+
+    private $validator;
+
+    public function __construct(ReportValidator $validator)
+    {
+        $this->validator = $validator;
+    }
 
     public function setTitle($title)
     {
@@ -15,7 +27,7 @@ class Report
 
     public function setDate($date = null)
     {
-        if (!$date) {
+        if (! $date) {
             $this->date = (new \DateTime())->format('y-m-d h:i:s');
         } else {
             $this->date = $date;
@@ -27,21 +39,19 @@ class Report
         $this->content = $content;
     }
 
-    public function validate()
+    public function getTitle()
     {
-        if (empty($this->title)) {
-            return false;
-        }
+        return $this->title;
+    }
 
-        if (empty($this->date)) {
-            return false;
-        }
+    public function getDate()
+    {
+        return $this->date;
+    }
 
-        if (empty($this->content)) {
-            return false;
-        }
-
-        return true;
+    public function getContent()
+    {
+        return $this->content;
     }
 
     public function formatJson()
@@ -49,13 +59,18 @@ class Report
         return json_encode($this->reportToArray());
     }
 
-    public function reportToArray()
+    public function toArray()
     {
         return [
             'title' => $this->title,
             'date' => $this->date,
             'content' => $this->content
         ];
+    }
+
+    public function reportToArray()
+    {
+        return $this->toArray();
     }
 
     public function formatHtml()
@@ -69,23 +84,20 @@ class Report
 
     public function sendReport($type)
     {
-        if ($this->validate())
-        {
-            if ($type == 'HTML')
-            {
+        if ($this->validator->validate($this)) {
+            if ($type == 'HTML') {
                 $mailer = new Mailer();
                 $mailer->send($this->formatHtml());
                 return true;
             }
-
-            if ($type == 'JSON')
-            {
+            
+            if ($type == 'JSON') {
                 $mailer = new Mailer();
                 $mailer->send($this->formatJson());
                 return true;
             }
         }
-
+        
         return false;
     }
 }
