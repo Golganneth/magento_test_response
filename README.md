@@ -1,19 +1,7 @@
-# Pair Programming Test
+Steps followed to refactor the code:
+1.- Separate test code from business logic.
+2.- Moved validation logic to its own class.
+3.- Moved formatting logic out of the Magento\Report class
+4.- Created new domain object for the Report class and a new service that performs the logic.
 
-The User can generate Reports and send them via Email in different formats like HTML or JSON.
- 
- 
-There is a bunch of bad practices, anti-patterns and broken SOLID principles in the given code. The objective of this test is to perform a needed refactor in order to have a maintainable, robust and understable application.
-
-You can freely create files, classes, methods and tests. Also you can break the given code into the pieces that you consider.
-
-## Requeriments
-
-- PHP 5.6 or higher installed.
-- Git installed.
-- Composer installed.
-
-## How to Install the Test
-
-- `composer install`
-- To run the Unit Tests `/vendor/bin/phpunit src`
+The goal from this refactor would be deprecate the Magento\Report class in favor of the domain object and the service to send the report. In order to do this, the next step would be replace the client calls to Magento\Report::sendReport by the call to the service Magento\Service\ReportSender::sendReport and the use Magento\Domain\Report instead of Magento\Report. Once this is done, we can remove the Magento\Report class. 
